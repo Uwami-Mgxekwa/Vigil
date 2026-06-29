@@ -17,6 +17,6 @@ Vigil is a lightweight terminal-based system monitor that provides real-time ins
 
 ### Build from source
 ```bash
-git clone https://github.com/yourusername/vigil.git
+git clone https://github.com/Uwami-Mgxekwa//vigil.git
 cd vigil
 cargo build --release
