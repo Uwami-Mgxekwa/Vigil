@@ -17,6 +17,20 @@ pub struct CpuSuggestions {
     pub tips: Vec<&'static str>,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum SuggestionColor {
+    Cyan,
+    Magenta,
+    Yellow,
+    Green,
+}
+
+pub struct SuggestionCategory {
+    pub title: &'static str,
+    pub color_hint: SuggestionColor,
+    pub tips: Vec<&'static str>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ActiveTab {
     Dashboard,
@@ -234,6 +248,63 @@ impl App {
             threshold,
             tips,
         })
+    }
+
+    /// Returns all static performance suggestion categories shown on the Suggestions tab.
+    pub fn get_all_suggestions() -> Vec<SuggestionCategory> {
+        vec![
+            SuggestionCategory {
+                title: "CPU Performance",
+                color_hint: SuggestionColor::Cyan,
+                tips: vec![
+                    "Close applications you are not actively using — each open app consumes CPU cycles even when idle.",
+                    "Disable startup programs that launch automatically: Task Manager > Startup tab, then disable anything you do not need.",
+                    "Check for Windows Update or antivirus scans running in the background (visible in Task Manager under svchost.exe or your AV process).",
+                    "Reduce browser tabs and extensions — browsers are among the heaviest CPU consumers on most systems.",
+                    "Update your device drivers, especially chipset and GPU drivers. Outdated drivers can cause unnecessary CPU overhead.",
+                    "If CPU stays high with no obvious cause, run a malware scan — crypto miners and adware are common culprits.",
+                    "For sustained high load, check CPU temperatures. Thermal throttling caused by poor cooling reduces effective performance.",
+                ],
+            },
+            SuggestionCategory {
+                title: "Memory (RAM)",
+                color_hint: SuggestionColor::Magenta,
+                tips: vec![
+                    "Close unused browser tabs — each tab can consume 100-500 MB of RAM.",
+                    "Restart applications that have been running for days. Long-running apps can accumulate memory leaks over time.",
+                    "Disable startup programs to free RAM on boot: Task Manager > Startup tab.",
+                    "Check for memory-heavy background processes in Task Manager and end tasks that are not needed.",
+                    "If swap usage is high, your system is running low on physical RAM. Consider closing apps or upgrading your RAM.",
+                    "Avoid running virtual machines or emulators unless necessary — they reserve large blocks of RAM.",
+                    "Set a larger pagefile (virtual memory) if your system frequently runs out of RAM under heavy workloads.",
+                ],
+            },
+            SuggestionCategory {
+                title: "Network Usage",
+                color_hint: SuggestionColor::Yellow,
+                tips: vec![
+                    "Pause or schedule large downloads and updates for off-peak hours to keep bandwidth available.",
+                    "Check for applications uploading data in the background — cloud sync tools (OneDrive, Dropbox, Google Drive) can saturate upload bandwidth.",
+                    "Disable auto-play videos in browsers and streaming apps when you only need audio.",
+                    "Use Task Manager > Performance > Open Resource Monitor > Network tab to identify which process is consuming bandwidth.",
+                    "If upload traffic is unexpectedly high, check for backup software or telemetry processes running silently.",
+                    "Restart your router if network speeds are consistently below your plan's rated speed.",
+                ],
+            },
+            SuggestionCategory {
+                title: "General System Health",
+                color_hint: SuggestionColor::Green,
+                tips: vec![
+                    "Restart your computer regularly — Windows performs memory cleanup and applies updates on reboot.",
+                    "Keep your OS and drivers up to date. Security patches often include performance fixes.",
+                    "Run Disk Cleanup (Windows) periodically to remove temporary files that can slow down the system.",
+                    "Check your storage drive health using a tool like CrystalDiskInfo — a failing drive causes slowdowns across the whole system.",
+                    "Ensure your power plan is set to Balanced or High Performance: Control Panel > Power Options.",
+                    "Disable visual effects for better performance: System Properties > Advanced > Performance Settings > Adjust for best performance.",
+                    "Scan for malware monthly even if you have an antivirus — some malware disables AV protection.",
+                ],
+            },
+        ]
     }
 
     pub fn adjust_setting(&mut self, increase: bool) {
