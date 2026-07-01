@@ -1,0 +1,22 @@
+# Vigil Configuration File
+# All configurations are loaded on startup and can be overridden by CLI arguments.
+
+# Polling/Refresh interval in milliseconds
+refresh_interval = 1000
+
+# Thresholds for triggering alert logs
+[thresholds]
+# CPU utilization percentage (0.0 to 100.0) above which an alert is triggered
+cpu_percent = 80.0
+
+# Memory utilization percentage (0.0 to 100.0) above which an alert is triggered
+memory_percent = 85.0
+
+# Network Rx (Download) speed threshold in Megabytes per second (MB/s)
+network_rx_mb = 10.0
+
+# Network Tx (Upload) speed threshold in Megabytes per second (MB/s)
+network_tx_mb = 10.0
+
+# Cooldown period in seconds to wait before repeating an alert of the same type
+alert_cooldown_secs = 10
