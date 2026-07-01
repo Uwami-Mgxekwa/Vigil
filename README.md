@@ -70,7 +70,7 @@ Vigil can be launched directly from any terminal. The two screenshots below show
 ### Build and run
 
 ```sh
-git clone https://github.com/your-username/Vigil.git
+git clone https://github.com/Uwami-Mgxekwa/Vigil.git
 cd Vigil
 cargo build --release
 ```
@@ -169,3 +169,9 @@ cargo build --release --target x86_64-pc-windows-msvc
 ## License
 
 This project does not currently specify a license. All rights reserved by the author unless stated otherwise.
+
+---
+
+## Author
+
+Developed and maintained by [Uwami Mgxekwa](https://github.com/Uwami-Mgxekwa).
