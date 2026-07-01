@@ -418,6 +418,83 @@ fn draw_settings(f: &mut Frame, app: &App, area: Rect) {
     f.render_widget(help_paragraph, chunks[1]);
 }
 
+fn draw_suggestions(f: &mut Frame, area: Rect) {
+    let block = Block::default()
+        .title(" PERFORMANCE SUGGESTIONS ")
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(Color::Cyan));
+    let inner_area = block.inner(area);
+    f.render_widget(block, area);
+
+    let categories = App::get_all_suggestions();
+
+    // Split inner area into a header line + one row per two categories side by side
+    let header_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(2), // intro line
+            Constraint::Min(4),    // category grid
+        ])
+        .split(inner_area);
+
+    let intro = Paragraph::new(Line::from(vec![
+        Span::styled(
+            " Tips to keep your system running smoothly. Press [4] or Tab to reach this page at any time.",
+            Style::default().fg(Color::DarkGray),
+        ),
+    ]));
+    f.render_widget(intro, header_chunks[0]);
+
+    // Lay out categories in a 2-column grid (row 0: CPU + Memory, row 1: Network + General)
+    let row_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .split(header_chunks[1]);
+
+    for (row_idx, row_area) in row_chunks.iter().enumerate() {
+        let col_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(*row_area);
+
+        for col_idx in 0..2 {
+            let cat_idx = row_idx * 2 + col_idx;
+            if cat_idx >= categories.len() {
+                break;
+            }
+            let cat = &categories[cat_idx];
+
+            let color = match cat.color_hint {
+                SuggestionColor::Cyan    => Color::Cyan,
+                SuggestionColor::Magenta => Color::Magenta,
+                SuggestionColor::Yellow  => Color::Yellow,
+                SuggestionColor::Green   => Color::Green,
+            };
+
+            let cat_block = Block::default()
+                .title(format!(" {} ", cat.title))
+                .title_style(Style::default().fg(color).add_modifier(Modifier::BOLD))
+                .borders(Borders::ALL)
+                .border_type(BorderType::Rounded)
+                .border_style(Style::default().fg(color));
+            let cat_inner = cat_block.inner(col_chunks[col_idx]);
+            f.render_widget(cat_block, col_chunks[col_idx]);
+
+            let tip_lines: Vec<Line> = cat.tips.iter().map(|tip| {
+                Line::from(vec![
+                    Span::styled(" > ", Style::default().fg(color)),
+                    Span::styled(*tip, Style::default().fg(Color::White)),
+                ])
+            }).collect();
+
+            let tip_paragraph = Paragraph::new(tip_lines)
+                .wrap(ratatui::widgets::Wrap { trim: false });
+            f.render_widget(tip_paragraph, cat_inner);
+        }
+    }
+}
+
 fn draw_status_bar(f: &mut Frame, app: &App, area: Rect) {
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
