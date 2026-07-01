@@ -22,6 +22,7 @@ pub enum ActiveTab {
     Dashboard,
     Alerts,
     Settings,
+    Suggestions,
 }
 
 pub struct App {
