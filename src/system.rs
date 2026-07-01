@@ -41,6 +41,7 @@ impl std::fmt::Display for AlertType {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct Alert {
     pub timestamp: chrono::DateTime<chrono::Local>,
     pub alert_type: AlertType,
@@ -70,7 +71,7 @@ impl MetricsCollector {
     pub fn collect(&mut self) -> SystemMetrics {
         self.sys.refresh_cpu_usage();
         self.sys.refresh_memory();
-        self.networks.refresh();
+        self.networks.refresh(true);
 
         let elapsed = self.last_collection.elapsed().as_secs_f64();
         self.last_collection = Instant::now();
