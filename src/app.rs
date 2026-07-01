@@ -4,6 +4,20 @@ use std::collections::HashMap;
 use chrono::Local;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CpuSeverity {
+    Moderate,
+    High,
+    Critical,
+}
+
+pub struct CpuSuggestions {
+    pub severity: CpuSeverity,
+    pub cpu_value: f32,
+    pub threshold: f32,
+    pub tips: Vec<&'static str>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ActiveTab {
     Dashboard,
     Alerts,
@@ -162,6 +176,63 @@ impl App {
             }
             self.last_alert_times.insert(alert_type, now);
         }
+    }
+
+    /// Returns contextual suggestions based on current CPU usage severity.
+    /// Returns None if CPU is below threshold (no advice needed).
+    pub fn get_cpu_suggestions(&self) -> Option<CpuSuggestions> {
+        let cpu = match &self.current_metrics {
+            Some(m) => m.overall_cpu,
+            None => return None,
+        };
+        let threshold = self.config.thresholds.cpu_percent;
+
+        if cpu < threshold {
+            return None;
+        }
+
+        // Tier the severity based on how far over threshold we are
+        let overage = cpu - threshold;
+        let (severity, tips) = if overage >= 30.0 || cpu >= 95.0 {
+            (
+                CpuSeverity::Critical,
+                vec![
+                    "Kill runaway processes: open Task Manager (Ctrl+Shift+Esc) and end high-CPU tasks.",
+                    "Check for malware or crypto miners consuming cycles unexpectedly.",
+                    "Force-close frozen applications that may be spinning in a loop.",
+                    "Consider rebooting if the issue persists — memory leaks can cause sustained spikes.",
+                    "Check cooling: thermal throttling from overheating can cause erratic CPU spikes.",
+                ],
+            )
+        } else if overage >= 15.0 || cpu >= 80.0 {
+            (
+                CpuSeverity::High,
+                vec![
+                    "Identify top consumers in Task Manager and close unnecessary apps.",
+                    "Disable startup programs: Task Manager > Startup tab.",
+                    "Update or reinstall drivers — faulty drivers can cause CPU spikes.",
+                    "Check for Windows Update running in the background (svchost.exe).",
+                    "Reduce browser tabs or extensions, they are common CPU hogs.",
+                ],
+            )
+        } else {
+            (
+                CpuSeverity::Moderate,
+                vec![
+                    "Monitor usage over time — a brief spike is usually fine.",
+                    "Close background apps you are not actively using.",
+                    "Check if antivirus is running a scheduled scan.",
+                    "Consider increasing the alert threshold if this is your normal workload.",
+                ],
+            )
+        };
+
+        Some(CpuSuggestions {
+            severity,
+            cpu_value: cpu,
+            threshold,
+            tips,
+        })
     }
 
     pub fn adjust_setting(&mut self, increase: bool) {

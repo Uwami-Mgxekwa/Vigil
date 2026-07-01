@@ -5,7 +5,7 @@ use ratatui::{
     widgets::{Block, BorderType, Borders, Gauge, List, ListItem, Paragraph, Sparkline, Tabs},
     Frame,
 };
-use crate::app::{ActiveTab, App};
+use crate::app::{ActiveTab, App, CpuSeverity};
 
 pub fn draw(f: &mut Frame, app: &mut App) {
     let chunks = Layout::default()
@@ -101,14 +101,31 @@ fn draw_cpu_panel(f: &mut Frame, app: &App, area: Rect) {
         }
     };
 
-    let cpu_chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(3), // Gauge
-            Constraint::Length(5), // Sparkline
-            Constraint::Min(4),    // Core usages list
-        ])
-        .split(inner_area);
+    let suggestions = app.get_cpu_suggestions();
+    let has_suggestions = suggestions.is_some();
+
+    // Shrink core list when suggestions panel is visible
+    let cpu_chunks = if has_suggestions {
+        Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(3), // Gauge
+                Constraint::Length(5), // Sparkline
+                Constraint::Min(3),    // Core usages list
+                Constraint::Length(7), // Suggestions panel
+            ])
+            .split(inner_area)
+    } else {
+        Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(3), // Gauge
+                Constraint::Length(5), // Sparkline
+                Constraint::Min(4),    // Core usages list
+                Constraint::Length(0), // No suggestions
+            ])
+            .split(inner_area)
+    };
 
     // CPU Gauge
     let cpu_val = metrics.overall_cpu;
@@ -134,10 +151,10 @@ fn draw_cpu_panel(f: &mut Frame, app: &App, area: Rect) {
     let core_items: Vec<ListItem> = metrics.cores.iter().map(|core| {
         let is_core_warning = core.usage >= app.config.thresholds.cpu_percent;
         let color = if is_core_warning { Color::LightRed } else { Color::Green };
-        
+
         let bar_len = ((core.usage / 10.0).min(10.0)) as usize;
         let bar = "█".repeat(bar_len) + &"░".repeat(10 - bar_len);
-        
+
         ListItem::new(Line::from(vec![
             Span::styled(format!(" {:<8} ", core.name), Style::default().fg(Color::Gray)),
             Span::styled(format!("[{}] ", bar), Style::default().fg(Color::DarkGray)),
@@ -149,6 +166,47 @@ fn draw_cpu_panel(f: &mut Frame, app: &App, area: Rect) {
         .block(Block::default().title("CPU Cores").borders(Borders::TOP))
         .style(Style::default().fg(Color::White));
     f.render_widget(core_list, cpu_chunks[2]);
+
+    // Suggestions panel — only rendered when CPU exceeds threshold
+    if let Some(s) = suggestions {
+        draw_cpu_suggestions(f, &s, cpu_chunks[3]);
+    }
+}
+
+fn draw_cpu_suggestions(f: &mut Frame, s: &crate::app::CpuSuggestions, area: Rect) {
+    let (border_color, severity_label, severity_color) = match s.severity {
+        CpuSeverity::Moderate => (Color::Yellow,  "  MODERATE ", Color::Yellow),
+        CpuSeverity::High     => (Color::LightRed, "  HIGH     ", Color::LightRed),
+        CpuSeverity::Critical => (Color::Red,      "  CRITICAL ", Color::Red),
+    };
+
+    let title = format!(
+        " SUGGESTIONS [ {} ] CPU at {:.1}% (threshold {:.1}%) ",
+        severity_label.trim(), s.cpu_value, s.threshold
+    );
+
+    let block = Block::default()
+        .title(title)
+        .title_style(Style::default().fg(severity_color).add_modifier(Modifier::BOLD))
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(border_color));
+    let inner = block.inner(area);
+    f.render_widget(block, area);
+
+    // Show up to 3 tips so they fit comfortably in the 5-line inner area
+    let tip_lines: Vec<Line> = s.tips.iter().take(3).enumerate().map(|(i, tip)| {
+        Line::from(vec![
+            Span::styled(
+                format!(" {} ", ["▸", "▸", "▸"][i]),
+                Style::default().fg(severity_color),
+            ),
+            Span::styled(*tip, Style::default().fg(Color::White)),
+        ])
+    }).collect();
+
+    let paragraph = Paragraph::new(tip_lines);
+    f.render_widget(paragraph, inner);
 }
 
 fn draw_mem_net_panel(f: &mut Frame, app: &App, area: Rect) {
