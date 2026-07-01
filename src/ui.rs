@@ -5,7 +5,7 @@ use ratatui::{
     widgets::{Block, BorderType, Borders, Gauge, List, ListItem, Paragraph, Sparkline, Tabs},
     Frame,
 };
-use crate::app::{ActiveTab, App, CpuSeverity};
+use crate::app::{ActiveTab, App, CpuSeverity, SuggestionColor};
 
 pub fn draw(f: &mut Frame, app: &mut App) {
     let chunks = Layout::default()
@@ -25,6 +25,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         ActiveTab::Dashboard => draw_dashboard(f, app, chunks[1]),
         ActiveTab::Alerts => draw_alerts(f, app, chunks[1]),
         ActiveTab::Settings => draw_settings(f, app, chunks[1]),
+        ActiveTab::Suggestions => draw_suggestions(f, chunks[1]),
     }
 
     // 3. Draw Status bar
@@ -47,11 +48,12 @@ fn draw_header(f: &mut Frame, app: &App, area: Rect) {
     f.render_widget(title, chunks[0]);
 
     // Tabs
-    let tab_titles = vec![" [1] Dashboard ", " [2] Alert Logs ", " [3] Settings "];
+    let tab_titles = vec![" [1] Dashboard ", " [2] Alert Logs ", " [3] Settings ", " [4] Suggestions "];
     let active_tab_idx = match app.active_tab {
         ActiveTab::Dashboard => 0,
         ActiveTab::Alerts => 1,
         ActiveTab::Settings => 2,
+        ActiveTab::Suggestions => 3,
     };
     
     let tabs = Tabs::new(tab_titles)

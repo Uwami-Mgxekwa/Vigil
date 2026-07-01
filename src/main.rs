@@ -75,7 +75,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                         app.active_tab = match app.active_tab {
                             ActiveTab::Dashboard => ActiveTab::Alerts,
                             ActiveTab::Alerts => ActiveTab::Settings,
-                            ActiveTab::Settings => ActiveTab::Dashboard,
+                            ActiveTab::Settings => ActiveTab::Suggestions,
+                            ActiveTab::Suggestions => ActiveTab::Dashboard,
                         };
                     }
                     KeyCode::Char('1') => {
@@ -86,6 +87,9 @@ fn main() -> Result<(), Box<dyn Error>> {
                     }
                     KeyCode::Char('3') => {
                         app.active_tab = ActiveTab::Settings;
+                    }
+                    KeyCode::Char('4') => {
+                        app.active_tab = ActiveTab::Suggestions;
                     }
                     KeyCode::Up => {
                         if app.active_tab == ActiveTab::Settings {
